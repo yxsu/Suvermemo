@@ -3,14 +3,19 @@
 from PySide.QtGui import *
 from PySide.QtCore import *
 import sys
+import Client
 
 class MainWindow(QMainWindow):
     
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setWindowTitle("Suvermemo -- Powered by Su Yuxin")
+        self.setMinimumSize(700, 500)
         self.SetupLayout()
         self.SetupMenus()
+        self.SetupConnection()
+        
+        self.client = Client()
 
     def SetupLayout(self):
         
@@ -63,6 +68,12 @@ class MainWindow(QMainWindow):
 
         self.sync_action = QAction("Sync", self)
         self.account_menu.addAction(self.sync_action)
+        
+    def SetupConnection(self):
+        self.pass_button.clicked.connect(self.ShowNote)
+        
+    def ShowNote(self):
+        print("show note")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
