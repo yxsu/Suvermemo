@@ -10,4 +10,43 @@ import evernote.edam.type.ttypes as Types
 class Client:
     
     def __init__(self):
-        pass
+        
+        #temporary authToken
+        self.authToken = "S=s1:U=41d1e:E=142b37de5b4:C=13b5bccb9b8:P=1cd:A=en-devtoken:H=eafd32b1803db02e99f68520ff00a779"
+        
+        evernoteHost = "sandbox.evernote.com"
+        userStoreUri = "https://" + evernoteHost + "/edam/user"
+
+        userStoreHttpClient = THttpClient.THttpClient(userStoreUri)
+        userStoreProtocol = TBinaryProtocol.TBinaryProtocol(userStoreHttpClient)
+        userStore = UserStore.Client(userStoreProtocol)
+
+        versionOK = userStore.checkVersion("Evernote EDAMTest (Python)",
+                                           UserStoreConstants.EDAM_VERSION_MAJOR,
+                                           UserStoreConstants.EDAM_VERSION_MINOR)
+        if(not versionOK):
+            pass 
+        
+        noteStoreUrl = userStore.getNoteStoreUrl(self.authToken)
+
+        noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
+        noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
+        self.note_store = NoteStore.Client(noteStoreProtocol)
+
+    def ListNotebooksInfo(self):
+        # List all of the notebooks in the user's account
+        self.notebooks = self.note_store.listNotebooks(self.authToken)
+        note_counts = self.note_store.findNoteCounts(self.authToken, NoteStore.NoteFilter(), False)
+        info = dict()
+        for notebook in self.notebooks:
+            info[notebook.name] = [note_counts.notebookCounts[notebook.guid], 0, 0]       
+        return info
+    
+    
+    
+    
+    
+    
+    
+    
+    

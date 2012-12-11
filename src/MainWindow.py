@@ -3,7 +3,8 @@
 from PySide.QtGui import *
 from PySide.QtCore import *
 import sys
-import Client
+from Client import Client
+from NotebookList import NotebookList
 
 class MainWindow(QMainWindow):
     
@@ -15,8 +16,6 @@ class MainWindow(QMainWindow):
         self.SetupMenus()
         self.SetupConnection()
         
-        self.client = Client()
-
     def SetupLayout(self):
         
         self.note_title = QLabel("Title:")
@@ -70,11 +69,25 @@ class MainWindow(QMainWindow):
         self.account_menu.addAction(self.sync_action)
         
     def SetupConnection(self):
-        self.pass_button.clicked.connect(self.ShowNote)
+        self.pass_button.clicked.connect(self.ShowNextNote)
+        self.sign_in_action.triggered.connect(self.SetupEvernote)
+        self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
         
-    def ShowNote(self):
-        print("show note")
-
+    def ShowNextNote(self, notebook_name = ""):
+        if(self.client):
+            print("show note")
+        
+    def SetupEvernote(self):
+        self.client = Client()
+        print("Evernote account is established")
+        
+    def ChooseNotebook(self):
+        notebook_info = self.client.ListNotebooksInfo()
+        notebook = NotebookList(notebook_info, self)
+        notebook.exec_()
+        self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
+        self.ShowNextNote(notebook.selected_notebook)
+        
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
