@@ -1,11 +1,10 @@
-import hashlib
-import binascii
 import thrift.protocol.TBinaryProtocol as TBinaryProtocol
 import thrift.transport.THttpClient as THttpClient
 import evernote.edam.userstore.UserStore as UserStore
 import evernote.edam.userstore.constants as UserStoreConstants
 import evernote.edam.notestore.NoteStore as NoteStore
 import evernote.edam.type.ttypes as Types
+import random
 
 class Client:
     
@@ -34,7 +33,7 @@ class Client:
         self.note_store = NoteStore.Client(noteStoreProtocol)
 
     def ListNotebooksInfo(self):
-        # List all of the notebooks in the user's account
+        '''List all of the notebooks in the user's account'''
         self.notebooks = self.note_store.listNotebooks(self.authToken)
         note_counts = self.note_store.findNoteCounts(self.authToken, NoteStore.NoteFilter(), False)
         info = dict()
@@ -42,8 +41,22 @@ class Client:
             info[notebook.name] = [note_counts.notebookCounts[notebook.guid], 0, 0]       
         return info
     
+    def ShowNextNote(self, notebook_name):
     
+        #find the guid of current notebook
+        if(notebook_name != None):
+            for notebook in self.notebooks:
+                if(notebook.name == notebook_name):
+                    self.current_notebook_guid = notebook.guid
+        
+            note_filter = NoteStore.NoteFilter()
+            note_filter.notebookGuid = self.current_notebook_guid
+            self.note_list = self.note_store.findNotes(self.authToken, note_filter, 0, 1000)
     
+        rand_index = random.randrange(self.note_list.startIndex, self.note_list.totalNotes)
+        note = self.note_list.notes[rand_index]
+        return note.title, self.note_store.getNoteContent(self.authToken, note.guid)
+            
     
     
     

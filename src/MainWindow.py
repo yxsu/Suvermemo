@@ -73,9 +73,11 @@ class MainWindow(QMainWindow):
         self.sign_in_action.triggered.connect(self.SetupEvernote)
         self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
         
-    def ShowNextNote(self, notebook_name = ""):
+    def ShowNextNote(self, notebook_name = None):
         if(self.client):
-            print("show note")
+            data = self.client.ShowNextNote(notebook_name)#data = [title content]
+            self.note_title.setText('Title : ' + data[0])
+            self.question.setText(data[1])
         
     def SetupEvernote(self):
         self.client = Client()
