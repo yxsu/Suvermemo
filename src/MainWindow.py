@@ -32,19 +32,23 @@ class MainWindow(QMainWindow):
         self.pass_button = QPushButton("Pass")
         self.fail_button = QPushButton("Fail")
         self.bad_button = QPushButton("Bad")
-
+        self.show_answer_button = QPushButton("Show Answer")
+        #set initial visible
+        self.SetVisibleOfButtonBox(False)
+        #set layout of buttons
         button_box = QHBoxLayout()
+        button_box.addWidget(self.show_answer_button)
         button_box.addWidget(self.good_button)
         button_box.addWidget(self.pass_button)
         button_box.addWidget(self.fail_button)
         button_box.addWidget(self.bad_button)
-        
+        #set main layout
         vbox = QVBoxLayout()
         vbox.addWidget(self.note_title)
         vbox.addWidget(self.question)
         vbox.addWidget(self.answer)
         vbox.addLayout(button_box)
-
+        #set progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setOrientation(Qt.Vertical)
         self.progress_bar.setTextDirection(QProgressBar.TopToBottom)
@@ -70,11 +74,22 @@ class MainWindow(QMainWindow):
         self.account_menu.addAction(self.sync_action)
         
     def SetupConnection(self):
-        self.pass_button.clicked.connect(self.ShowNextNote)
         self.sign_in_action.triggered.connect(self.SetupEvernote)
         self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
-        self.good_button.clicked.connect(self.ShowAnswer)
+        self.show_answer_button.clicked.connect(self.ShowAnswer)
+        #set the connection of evaluation
+        self.good_button.clicked.connect(lambda : self.Evaluation("good"))
+        self.pass_button.clicked.connect(lambda : self.Evaluation("pass"))
+        self.fail_button.clicked.connect(lambda : self.Evaluation("fail"))
+        self.bad_button.clicked.connect(lambda : self.Evaluation("bad"))
         
+    def SetVisibleOfButtonBox(self, to_evalute):
+        self.show_answer_button.setVisible(not to_evalute)
+        self.good_button.setVisible(to_evalute)
+        self.pass_button.setVisible(to_evalute)
+        self.fail_button.setVisible(to_evalute)
+        self.bad_button.setVisible(to_evalute)
+            
     def ShowNextNote(self, notebook_name = None):
         if(self.client):
             data = self.client.ShowNextNote(notebook_name)#data = [title content]
@@ -82,6 +97,7 @@ class MainWindow(QMainWindow):
             question, self.answer_list = self.ExtractTheAnswer(data[1])
             self.current_answer_index = 0
             self.question.setText(question)
+            self.answer.setText("")
             
             
     def ShowAnswer(self):
@@ -91,6 +107,8 @@ class MainWindow(QMainWindow):
                 answer = answer + '<p>' + self.answer_list[index] + '</p>'
             self.answer.setText(answer)
             self.current_answer_index = self.current_answer_index + 1
+        if(self.current_answer_index >= len(self.answer_list)):
+            self.SetVisibleOfButtonBox(True)
         
     def SetupEvernote(self):
         self.client = Client()
@@ -102,6 +120,11 @@ class MainWindow(QMainWindow):
         notebook.exec_()
         self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
         self.ShowNextNote(notebook.selected_notebook)
+    
+    def Evaluation(self, choice):
+        
+        self.SetVisibleOfButtonBox(False)
+        self.ShowNextNote()
         
     def ExtractTheAnswer(self, question):
         span_style = re.compile('<span style="color.*?</span>')
