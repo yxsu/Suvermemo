@@ -2,6 +2,7 @@
 
 from PySide.QtGui import *
 from PySide.QtCore import *
+import re
 import sys
 from Client import Client
 from NotebookList import NotebookList
@@ -65,19 +66,26 @@ class MainWindow(QMainWindow):
         self.choose_notebook_action = QAction("Choose Notebook", self)
         self.account_menu.addAction(self.choose_notebook_action)
 
-        self.sync_action = QAction("Sync", self)
+        self.sync_action = QAction("Sync with suyuxin's account", self)
         self.account_menu.addAction(self.sync_action)
         
     def SetupConnection(self):
         self.pass_button.clicked.connect(self.ShowNextNote)
         self.sign_in_action.triggered.connect(self.SetupEvernote)
         self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
+        self.good_button.clicked.connect(self.ShowAnswer)
         
     def ShowNextNote(self, notebook_name = None):
         if(self.client):
             data = self.client.ShowNextNote(notebook_name)#data = [title content]
             self.note_title.setText('Title : ' + data[0])
             self.question.setText(data[1])
+            self.question_content = data[1]
+            
+    def ShowAnswer(self):
+        
+        answer = self.ExtractTheAnswer(self.question_content)
+        self.answer.setText(answer)
         
     def SetupEvernote(self):
         self.client = Client()
@@ -89,6 +97,14 @@ class MainWindow(QMainWindow):
         notebook.exec_()
         self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
         self.ShowNextNote(notebook.selected_notebook)
+        
+    def ExtractTheAnswer(self, question):
+        print(question)
+        result = re.search('<span style="color.*?</span>', question).group(0)
+        print("color is " + result[20:27])
+        print("text is " + result[30: -7])
+        return question.replace(result[30: -7], ' [......] ')
+        
         
 if __name__ == '__main__':
     app = QApplication(sys.argv)
