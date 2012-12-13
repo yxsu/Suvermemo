@@ -90,12 +90,15 @@ class MainWindow(QMainWindow):
             
     def ShowNextNote(self, notebook_name = None):
         if(self.client):
-            data = self.client.ShowNextNote(notebook_name)#data = [title content]
-            self.note_title.setText('Title : ' + data[0])
-            question, self.answer_list = self.ExtractTheAnswer(data[1])
-            self.current_answer_index = 0
-            self.question.setText(question)
-            self.answer.setText("")    
+            try:
+                data = self.client.ShowNextNote(notebook_name)#data = [title content]
+                self.note_title.setText('Title : ' + data[0])
+                question, self.answer_list = self.ExtractTheAnswer(data[1])
+                self.current_answer_index = 0
+                self.question.setText(question)
+                self.answer.setText("")    
+            except RuntimeError:
+                pass
             
     def ShowAnswer(self):
         if(self.current_answer_index < len(self.answer_list)):
@@ -109,6 +112,7 @@ class MainWindow(QMainWindow):
         
     def SyncWithAccount(self):
         self.client.MakeConnectionWithEvernote()
+        self.client.UpdateNotebookList()
         print("Evernote account is estabilished")
         
     def ChooseNotebook(self):
@@ -119,7 +123,7 @@ class MainWindow(QMainWindow):
             self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
             self.ShowNextNote(notebook.selected_notebook)
         except IOError:
-            QMessageBox.warning(self, "Suvermemo", "The notebook you selected doesn't exist in client.\
+            QMessageBox.information(self, "Suvermemo", "The notebook list doesn't exist in client.\
                                                     You should sync with Evernote account first")
         except:
             raise
