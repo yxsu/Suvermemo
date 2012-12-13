@@ -79,13 +79,18 @@ class MainWindow(QMainWindow):
         if(self.client):
             data = self.client.ShowNextNote(notebook_name)#data = [title content]
             self.note_title.setText('Title : ' + data[0])
-            self.question.setText(data[1])
-            self.question_content = data[1]
+            question, self.answer_list = self.ExtractTheAnswer(data[1])
+            self.current_answer_index = 0
+            self.question.setText(question)
+            
             
     def ShowAnswer(self):
-        
-        answer = self.ExtractTheAnswer(self.question_content)
-        self.answer.setText(answer)
+        if(self.current_answer_index < len(self.answer_list)):
+            answer = '<?xml version="1.0" encoding="UTF-8"?>'
+            for index in range(self.current_answer_index + 1):
+                answer = answer + '<p>' + self.answer_list[index] + '</p>'
+            self.answer.setText(answer)
+            self.current_answer_index = self.current_answer_index + 1
         
     def SetupEvernote(self):
         self.client = Client()
@@ -99,12 +104,28 @@ class MainWindow(QMainWindow):
         self.ShowNextNote(notebook.selected_notebook)
         
     def ExtractTheAnswer(self, question):
-        print(question)
-        result = re.search('<span style="color.*?</span>', question).group(0)
-        print("color is " + result[20:27])
-        print("text is " + result[30: -7])
-        return question.replace(result[30: -7], ' [......] ')
-        
+        span_style = re.compile('<span style="color.*?</span>')
+        font_style = re.compile('<font color.*?</font>')
+        start_pos = 0
+        answer_list = []
+        while(True):
+            result = font_style.search(question, start_pos)
+            if(result == None):
+                break
+            sub_string = result.group()
+            answer_list.append(sub_string)
+            question = question.replace(sub_string[22: -7], ' [......] ')
+            start_pos = (result.start() + result.end()) / 2
+        start_pos = 0
+        while(True):
+            result = span_style.search(question, start_pos)
+            if(result == None):
+                break
+            sub_string = result.group(0)
+            answer_list.append(sub_string)
+            question = question.replace(sub_string[30: -7], ' [......] ')
+            start_pos = result.end(0)
+        return question, answer_list
         
 if __name__ == '__main__':
     app = QApplication(sys.argv)
