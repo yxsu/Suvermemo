@@ -11,6 +11,10 @@ import os
 class Client:
     
     def __init__(self):
+        self.notebook_base_path = '../data/notebooks/'
+        self.notebook_list_path = '../data/notebooks/notebook_list'
+    
+    def MakeConnectionWithEvernote(self):
         self.authToken = "S=s43:U=47f934:E=142e9b9232d:C=13b9207f72d:P=1cd:A=en-devtoken:H=55aee67673b98b2067e1576270845445"
         evernoteHost = "www.evernote.com"
         userStoreUri = "https://" + evernoteHost + "/edam/user"
@@ -47,13 +51,10 @@ class Client:
             if the given notebook is not stored locally, download the notebook first
             else load the notebook from local storage
         '''
-        file_path = '../data/notebooks/' + notebook_guid
-        if(os.path.exists(file_path)):
-            infile = open(file_path)
-            self.note_list = pickle.load(infile)
-            infile.close()
-        else:
-            self.note_list = self.DownloadNotes(notebook_guid)
+        file_path = self.notebook_base_path + notebook_guid
+        infile = open(file_path, 'r')
+        self.note_list = pickle.load(infile)
+        infile.close()
         
     def DownloadNotes(self, notebook_guid):
         
@@ -65,23 +66,22 @@ class Client:
         for note in note_list.notes:
             note.content = self.note_store.getNoteContent(self.authToken, note.guid)
         #save note_list to file
-        saved_file = open('../data/notebooks/' + notebook_guid, 'w')
+        saved_file = open(self.notebook_base_path + notebook_guid, 'w')
         pickle.dump(note_list.notes, saved_file)
         saved_file.close()
         return note_list.notes
     
     def DownloadNotebookList(self):
-        list_path = '../data/notebooks/notebook_list'
         #read notebook list and count list
-        if(os.path.exists(list_path)):
-            list_file = open(list_path)
+        if(os.path.exists(self.notebook_list_path)):
+            list_file = open(self.notebook_list_path)
             notebooks, note_counts = pickle.load(list_file)
             list_file.close()
             return notebooks, note_counts
         else:
             notebooks = self.note_store.listNotebooks(self.authToken)
             note_counts = self.note_store.findNoteCounts(self.authToken, NoteStore.NoteFilter(), False)
-            list_file = open(list_path, 'w')
+            list_file = open(self.notebook_list_path, 'w')
             pickle.dump([notebooks, note_counts], list_file)
             list_file.close()
             return notebooks, note_counts

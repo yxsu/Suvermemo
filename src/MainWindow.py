@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
         self.SetupLayout()
         self.SetupMenus()
         self.SetupConnection()
+        self.client = Client()
         
     def SetupLayout(self):
         
@@ -63,9 +64,6 @@ class MainWindow(QMainWindow):
 
     def SetupMenus(self):
         self.account_menu = self.menuBar().addMenu("Account")
-        
-        self.sign_in_action = QAction("Sign in...", self)
-        self.account_menu.addAction(self.sign_in_action)
 
         self.choose_notebook_action = QAction("Choose Notebook", self)
         self.account_menu.addAction(self.choose_notebook_action)
@@ -74,7 +72,7 @@ class MainWindow(QMainWindow):
         self.account_menu.addAction(self.sync_action)
         
     def SetupConnection(self):
-        self.sign_in_action.triggered.connect(self.SetupEvernote)
+        self.sync_action.triggered.connect(self.SyncWithAccount)
         self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
         self.show_answer_button.clicked.connect(self.ShowAnswer)
         #set the connection of evaluation
@@ -97,8 +95,7 @@ class MainWindow(QMainWindow):
             question, self.answer_list = self.ExtractTheAnswer(data[1])
             self.current_answer_index = 0
             self.question.setText(question)
-            self.answer.setText("")
-            
+            self.answer.setText("")    
             
     def ShowAnswer(self):
         if(self.current_answer_index < len(self.answer_list)):
@@ -110,17 +107,23 @@ class MainWindow(QMainWindow):
         if(self.current_answer_index >= len(self.answer_list)):
             self.SetVisibleOfButtonBox(True)
         
-    def SetupEvernote(self):
-        self.client = Client()
-        print("Evernote account is established")
+    def SyncWithAccount(self):
+        self.client.MakeConnectionWithEvernote()
+        print("Evernote account is estabilished")
         
     def ChooseNotebook(self):
-        notebook_info = self.client.ListNotebooksInfo()
-        notebook = NotebookList(notebook_info, self)
-        notebook.exec_()
-        self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
-        self.ShowNextNote(notebook.selected_notebook)
-    
+        try:
+            notebook_info = self.client.ListNotebooksInfo()
+            notebook = NotebookList(notebook_info, self)
+            notebook.exec_()
+            self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
+            self.ShowNextNote(notebook.selected_notebook)
+        except IOError:
+            QMessageBox.warning(self, "Suvermemo", "The notebook you selected doesn't exist in client.\
+                                                    You should sync with Evernote account first")
+        except:
+            raise
+        
     def Evaluation(self, choice):
         
         self.SetVisibleOfButtonBox(False)
