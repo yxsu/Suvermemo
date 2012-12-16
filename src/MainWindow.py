@@ -18,6 +18,17 @@ class MainWindow(QMainWindow):
         self.SetupConnection()
         self.client = Client()
         
+    def event(self, evt):
+        event_type = evt.type()
+        
+        if(event_type == QEvent.Close):
+            self.client.SaveTimeStamp()
+            evt.ignore()
+            return False
+        else:
+            return super(MainWindow, self).event(evt)
+        
+
     def SetupLayout(self):
         
         self.note_title = QLabel("Title:")
@@ -129,7 +140,8 @@ class MainWindow(QMainWindow):
             raise
         
     def Evaluation(self, choice):
-        
+        #save result
+        self.client.SetNewTimeStamp(choice)
         self.SetVisibleOfButtonBox(False)
         self.ShowNextNote()
         
