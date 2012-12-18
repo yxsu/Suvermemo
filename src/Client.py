@@ -10,6 +10,7 @@ import os
 import time
 from PySide.QtGui import QProgressDialog
 from PySide.QtCore import Qt
+from datetime import timedelta, date
 
 class Client:
     
@@ -47,7 +48,7 @@ class Client:
                     self.LoadNotebookContent(notebook.guid)
         #remove the future note
         for note in self.note_list[:]:
-            if(self.timestamp_list[note.guid][0] > time.localtime()):
+            if(self.timestamp_list[note.guid][0] > date.today()):
                 self.note_list.remove(note)
                 
         if(len(self.note_list) > 0):
@@ -59,19 +60,16 @@ class Client:
             return '', "There is nothing left in today's list" 
             
     def SetNewTimeStamp(self, choice):
-        one_day = 24 * 60 * 60
         
         current_count = self.timestamp_list[self.current_note_guid][1]
         new_count = {'good': 10, 'pass': current_count + 1, 'fail': current_count - 1, 'bad': -10}
         self.timestamp_list[self.current_note_guid][1] = new_count[choice]
         #set the next time
-        self.timestamp_list[self.current_note_guid][0] = time.localtime() + one_day * self.Fib(new_count[choice])
+        self.timestamp_list[self.current_note_guid][0] = date.today() +  timedelta(days = self.Fib(new_count[choice]))
         
     def Fib(self, n):
-        if(n < 0):
+        if(n < 1):
             return 0
-        elif n == 0:
-            return 1
         else:
             a, b =1, 1
             for i in range(n):
@@ -113,7 +111,7 @@ class Client:
             progress.setValue(count)
             count = count + 1
             note.content = self.note_store.getNoteContent(self.authToken, note.guid)
-            timestamp_list[note.guid] = [time.localtime(), 0]
+            timestamp_list[note.guid] = [date.today(), 0]
             if(progress.wasCanceled()):
                 raise RuntimeError("Downloading was canceled")
         #save note_list to file
@@ -142,7 +140,7 @@ class Client:
         
     def SaveTimeStamp(self):
         if(hasattr(self, 'timestamp_list')):
-            timestamp_file = open(self.notebook_base_path + 'time_' + self.current_notebood_guid, 'w')
+            timestamp_file = open(self.notebook_base_path + 'time_' + self.current_notebook_guid, 'w')
             pickle.dump(self.timestamp_list, timestamp_file)
             timestamp_file.close()
             

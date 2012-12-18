@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
         if(event_type == QEvent.Close):
             self.client.SaveTimeStamp()
             evt.ignore()
+            QCoreApplication.quit()
             return False
         else:
             return super(MainWindow, self).event(evt)
