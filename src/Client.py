@@ -29,6 +29,7 @@ class Client:
         noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
         noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
         self.note_store = NoteStore.Client(noteStoreProtocol)
+        print("The connection with evernote.com is established")
 
     def ListNotebooksInfo(self):
         '''List all of the notebooks in the user's account'''
