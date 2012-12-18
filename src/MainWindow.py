@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 
 from PySide.QtGui import *
 from PySide.QtCore import *
@@ -134,6 +134,8 @@ class MainWindow(QMainWindow):
             notebook.exec_()
             self.setWindowTitle('Suvermemo - ' + notebook.selected_notebook)
             self.ShowNextNote(notebook.selected_notebook)
+            self.notes_number = len(self.client.note_list)
+            self.progress_bar.setMaximum(self.notes_number)
         except IOError:
             QMessageBox.information(self, "Suvermemo", "The notebook list doesn't exist in client.\
                                                     You should sync with Evernote account first")
@@ -144,6 +146,7 @@ class MainWindow(QMainWindow):
         #save result
         self.client.SetNewTimeStamp(choice)
         self.SetVisibleOfButtonBox(False)
+        self.progress_bar.setValue(self.notes_number - len(self.client.note_list))
         self.ShowNextNote()
         
     def ExtractTheAnswer(self, question):
