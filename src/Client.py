@@ -102,13 +102,19 @@ class Client:
         note_filter = NoteStore.NoteFilter()
         note_filter.notebookGuid = notebook_guid
         NoteStore.NoteList
+        offset = 0
         note_list = self.note_store.findNotes(self.authToken, note_filter, 0, 10000)
+        full_note_list = note_list.notes
+        while(len(full_note_list) < note_list.totalNotes):
+            offset = offset + len(note_list.notes)
+            note_list = self.note_store.findNotes(self.authToken, note_filter, offset, 10000)
+            full_note_list.extend(note_list.notes)
         #download the content of note
-        progress = QProgressDialog("Downloading content of notes...", "Abort downloading", 0, len(note_list.notes))
+        progress = QProgressDialog("Downloading content of notes...", "Abort downloading", 0, len(full_note_list))
         count = 0
         progress.setWindowModality(Qt.WindowModal)
         timestamp_list = dict()
-        for note in note_list.notes:
+        for note in full_note_list:
             progress.setValue(count)
             count = count + 1
             note.content = self.note_store.getNoteContent(self.authToken, note.guid)
@@ -117,13 +123,13 @@ class Client:
                 raise RuntimeError("Downloading was canceled")
         #save note_list to file
         saved_file = open(self.notebook_base_path + notebook_guid, 'w')
-        pickle.dump(note_list.notes, saved_file)
+        pickle.dump(full_note_list, saved_file)
         saved_file.close()
         #save timestamp file
         timestamp_file = open(self.notebook_base_path + 'time_' + notebook_guid, 'w')
         pickle.dump(timestamp_list, timestamp_file)
         timestamp_file.close()
-        return note_list.notes, timestamp_list
+        return full_note_list, timestamp_list
     
     def LoadNotebookList(self):
         #read notebook list and count list
