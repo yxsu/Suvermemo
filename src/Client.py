@@ -151,5 +151,7 @@ class Client:
             pickle.dump(self.timestamp_list, timestamp_file)
             timestamp_file.close()
             
+    def UpdateNotebookContent(self):
+        pass
         
     
