@@ -14,6 +14,7 @@ from datetime import timedelta, date
 
 class Client:
     
+    
     def __init__(self):
         self.notebook_base_path = '../data/notebooks/'
         self.notebook_list_path = '../data/notebooks/notebook_list'
