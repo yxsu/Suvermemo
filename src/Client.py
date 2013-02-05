@@ -95,14 +95,16 @@ class Client:
             infile.close()
         else:
             self.MakeConnectionWithEvernote()
-            self.note_list, self.timestamp_list = self.DownloadNotes(notebook_guid)
+            self.DownloadNotes(notebook_guid)
         
         
     def DownloadNotes(self, notebook_guid):
-        
+        #set progress dialog
+        progress = QProgressDialog("Read data from server...", "Abort downloading", 0, 100)
+        progress.setWindowModality(Qt.WindowModal)
+        #read note data from server
         note_filter = NoteStore.NoteFilter()
         note_filter.notebookGuid = notebook_guid
-        NoteStore.NoteList
         offset = 0
         note_list = self.note_store.findNotes(self.authToken, note_filter, 0, 10000)
         full_note_list = note_list.notes
@@ -110,27 +112,43 @@ class Client:
             offset = offset + len(note_list.notes)
             note_list = self.note_store.findNotes(self.authToken, note_filter, offset, 10000)
             full_note_list.extend(note_list.notes)
+        #set content of progress dialog
+        progress.setMaximum(len(full_note_list))
+        progress.setLabelText("Downloading content of notebook...")
         #download the content of note
-        progress = QProgressDialog("Downloading content of notes...", "Abort downloading", 0, len(full_note_list))
+        if(not hasattr(self, 'note_list')):
+            self.note_list = []
+            self.timestamp_list = dict()
+            guid_list = []
+        else:
+            guid_list = [note.guid for note in self.note_list]
+            
         count = 0
-        progress.setWindowModality(Qt.WindowModal)
-        timestamp_list = dict()
         for note in full_note_list:
+            #load content
+            if(note.guid not in guid_list):
+                #add new note
+                note.content = self.note_store.getNoteContent(self.authToken, note.guid)
+                self.note_list.append(note)
+                self.timestamp_list[note.guid] = [date.today(), 0]
+            else:
+                #update existed note
+                note_index = guid_list.index(note.guid)
+                if(self.note_list[note_index].updated < note.updated):
+                    self.note_list[note_index].content = self.note_store.getNoteContent(self.authToken, note.guid)
+            #set counter
             progress.setValue(count)
             count = count + 1
-            note.content = self.note_store.getNoteContent(self.authToken, note.guid)
-            timestamp_list[note.guid] = [date.today(), 0]
             if(progress.wasCanceled()):
                 raise RuntimeError("Downloading was canceled")
         #save note_list to file
         saved_file = open(self.notebook_base_path + notebook_guid, 'w')
-        pickle.dump(full_note_list, saved_file)
+        pickle.dump(self.note_list, saved_file)
         saved_file.close()
         #save timestamp file
         timestamp_file = open(self.notebook_base_path + 'time_' + notebook_guid, 'w')
-        pickle.dump(timestamp_list, timestamp_file)
+        pickle.dump(self.timestamp_list, timestamp_file)
         timestamp_file.close()
-        return full_note_list, timestamp_list
     
     def LoadNotebookList(self):
         #read notebook list and count list
@@ -152,7 +170,19 @@ class Client:
             pickle.dump(self.timestamp_list, timestamp_file)
             timestamp_file.close()
             
-    def UpdateNotebookContent(self):
-        pass
-        
-    
+    def UpdateLocalNotebooks(self):
+        print("update local notebooks...")
+        notebook_list, note_count = self.LoadNotebookList()
+        for notebook in notebook_list:
+            file_path = self.notebook_base_path + notebook.guid
+            timestamp_path = self.notebook_base_path + 'time_' + notebook.guid
+            if(os.path.exists(file_path) and os.path.exists(timestamp_path)):
+                infile = open(file_path, 'r')
+                self.note_list = pickle.load(infile)
+                infile.close()
+                self.SaveTimeStamp()
+                infile = open(timestamp_path, 'r')
+                self.timestamp_list = pickle.load(infile)
+                infile.close()
+                self.DownloadNotes(notebook.guid)
+        print("finished")

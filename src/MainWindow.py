@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
 
         self.sync_action = QAction("Sync with suyuxin's account", self)
         self.account_menu.addAction(self.sync_action)
-        
+         
         self.update_action = QAction("Update local database", self)
         self.account_menu.addAction(self.update_action)
         
@@ -129,6 +129,7 @@ class MainWindow(QMainWindow):
     def SyncWithAccount(self):
         self.client.MakeConnectionWithEvernote()
         self.client.UpdateNotebookList()
+        self.client.UpdateLocalNotebooks()
         print("Evernote account is estabilished")
         
     def UpdateLocalDatabase(self):
