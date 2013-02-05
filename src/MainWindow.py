@@ -83,14 +83,10 @@ class MainWindow(QMainWindow):
 
         self.sync_action = QAction("Sync with suyuxin's account", self)
         self.account_menu.addAction(self.sync_action)
-         
-        self.update_action = QAction("Update local database", self)
-        self.account_menu.addAction(self.update_action)
         
     def SetupConnection(self):
         self.sync_action.triggered.connect(self.SyncWithAccount)
         self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
-        self.update_action.triggered.connect(self.UpdateLocalDatabase)
         self.show_answer_button.clicked.connect(self.ShowAnswer)
         #set the connection of evaluation
         self.good_button.clicked.connect(lambda : self.Evaluation("good"))
@@ -134,9 +130,6 @@ class MainWindow(QMainWindow):
         self.client.UpdateNotebookList()
         self.client.UpdateLocalNotebooks()
         print("Evernote account is estabilished")
-        
-    def UpdateLocalDatabase(self):
-        self.client.updateNotebookContent()
         
     def ChooseNotebook(self):
         try:
