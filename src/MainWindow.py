@@ -13,6 +13,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(parent)
         self.setWindowTitle("Suvermemo -- Powered by Su Yuxin")
         self.setMinimumSize(700, 500)
+        self.font_size = 24
         self.SetupLayout()
         self.SetupMenus()
         self.SetupConnection()
@@ -118,9 +119,11 @@ class MainWindow(QMainWindow):
             
     def ShowAnswer(self):
         if(self.current_answer_index < len(self.answer_list)):
-            answer = '<?xml version="1.0" encoding="UTF-8"?>'
+            answer = '<?xml version="1.0" encoding="UTF-8"?>' + \
+                     '<body style="font-size: '+str(self.font_size)+'pt; ">'
             for index in range(self.current_answer_index + 1):
                 answer = answer + '<p>' + self.answer_list[index] + '</p>'
+            answer = answer + '</body>'
             self.answer.setText(answer)
             self.current_answer_index = self.current_answer_index + 1
         if(self.current_answer_index >= len(self.answer_list)):
@@ -158,6 +161,10 @@ class MainWindow(QMainWindow):
         self.ShowNextNote()
         
     def ExtractTheAnswer(self, question):
+        #set font size
+        position = question.index("<en-note style=")
+        question = question[:position + 16] + "font-size: "+str(self.font_size)+ "pt; " +question[position+17:]
+        #find answer
         span_style = re.compile('<span style="color.*?</span>')
         font_style = re.compile('<font color.*?</font>')
         start_pos = 0
