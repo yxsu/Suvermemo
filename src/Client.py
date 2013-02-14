@@ -16,8 +16,8 @@ class Client:
     
     
     def __init__(self):
-        self.notebook_base_path = '../data/notebooks/'
-        self.notebook_list_path = '../data/notebooks/notebook_list'
+        self.notebook_base_path = 'data/notebooks/'
+        self.notebook_list_path = 'data/notebooks/notebook_list'
     
     def MakeConnectionWithEvernote(self):
         self.authToken = "S=s43:U=47f934:E=142e9b9232d:C=13b9207f72d:P=1cd:A=en-devtoken:H=55aee67673b98b2067e1576270845445"
