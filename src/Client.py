@@ -1,9 +1,7 @@
-import thrift.protocol.TBinaryProtocol as TBinaryProtocol
-import thrift.transport.THttpClient as THttpClient
-import evernote.edam.userstore.UserStore as UserStore
 import evernote.edam.userstore.constants as UserStoreConstants
-import evernote.edam.notestore.NoteStore as NoteStore
 import evernote.edam.type.ttypes as Types
+from evernote.api.client import EvernoteClient
+import evernote.edam.notestore.NoteStore as NoteStore
 import random
 import pickle
 import os
@@ -18,18 +16,15 @@ class Client:
     def __init__(self):
         self.notebook_base_path = '../data/notebooks/'
         self.notebook_list_path = '../data/notebooks/notebook_list'
+        self.consumer_key = 'suyuxin-9809'
+        self.consumer_secret = 'f2541e0d8ea719ff'
+        self.callback_url = 'https://app.yinxiang.com/Oauth.action'
+        self.oauth_url = 'https://app.yinxiang.com/oauth'
+        self.authToken = 'S=s43:U=47f934:E=1445530c38e:C=13cfd7f978e:P=1cd:A=en-devtoken:H=1356ea06ef47bf5507cd51a0ad42eb06'
     
     def MakeConnectionWithEvernote(self):
-        self.authToken = "S=s43:U=47f934:E=142e9b9232d:C=13b9207f72d:P=1cd:A=en-devtoken:H=55aee67673b98b2067e1576270845445"
-        evernoteHost = "www.evernote.com"
-        userStoreUri = "https://" + evernoteHost + "/edam/user"
-        userStoreHttpClient = THttpClient.THttpClient(userStoreUri)
-        userStoreProtocol = TBinaryProtocol.TBinaryProtocol(userStoreHttpClient)
-        userStore = UserStore.Client(userStoreProtocol)
-        noteStoreUrl = userStore.getNoteStoreUrl(self.authToken)
-        noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
-        noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
-        self.note_store = NoteStore.Client(noteStoreProtocol)
+        client = EvernoteClient(token = self.authToken, sandbox = False )
+        self.note_store = client.get_note_store()
         print("The connection with evernote.com is established")
 
     def ListNotebooksInfo(self):
@@ -37,7 +32,23 @@ class Client:
         self.notebooks, note_counts = self.LoadNotebookList()
         info = dict()
         for notebook in self.notebooks:
-            info[notebook.name.decode('utf-8')] = [note_counts.notebookCounts[notebook.guid], 0, 0]       
+            file_path = self.notebook_base_path + notebook.guid
+            timestamp_path = self.notebook_base_path + 'time_' + notebook.guid
+            if(os.path.exists(file_path) and os.path.exists(timestamp_path)):
+                infile = open(file_path, 'r')
+                self.note_list = pickle.load(infile)
+                infile.close()
+                self.SaveTimeStamp()
+                infile = open(timestamp_path, 'r')
+                self.timestamp_list = pickle.load(infile)
+                infile.close()
+                count = 0
+                for note in notebook:
+                    if(self.timestamp_list[note.guid][0] <= date.today()):
+                        count = count + 1
+                info[notebook.name.decode('utf-8')] = [note_counts.notebookCounts[notebook.guid], count, 0]       
+            else:
+                info[notebook.name.decode('utf-8')] = [note_counts.notebookCounts[notebook.guid], -1, 0]       
         return info
     
     def ShowNextNote(self, notebook_name):
@@ -108,7 +119,9 @@ class Client:
         offset = 0
         note_list = self.note_store.findNotes(self.authToken, note_filter, 0, 10000)
         full_note_list = note_list.notes
+        progress.setMaximum(note_list.totalNotes + 1)
         while(len(full_note_list) < note_list.totalNotes):
+            progress.setValue(offset)
             offset = offset + len(note_list.notes)
             note_list = self.note_store.findNotes(self.authToken, note_filter, offset, 10000)
             full_note_list.extend(note_list.notes)
@@ -165,7 +178,7 @@ class Client:
         list_file.close()
         
     def SaveTimeStamp(self):
-        if(hasattr(self, 'timestamp_list')):
+        if(hasattr(self, 'timestamp_list') and hasattr(self, 'current_notebook_guid')):
             timestamp_file = open(self.notebook_base_path + 'time_' + self.current_notebook_guid, 'w')
             pickle.dump(self.timestamp_list, timestamp_file)
             timestamp_file.close()
