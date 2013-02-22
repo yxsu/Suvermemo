@@ -2,12 +2,8 @@
 
 from PySide.QtGui import *
 from PySide.QtCore import *
-import webbrowser
-from evernote.api.client import EvernoteClient
 import re
 import sys
-import pickle
-from oauth import Auth
 from Client import Client
 from NotebookList import NotebookList
 
@@ -82,9 +78,6 @@ class MainWindow(QMainWindow):
     def SetupMenus(self):
         self.account_menu = self.menuBar().addMenu("Account")
 
-        self.authorize_action = QAction("Authorize", self)
-        self.account_menu.addAction(self.authorize_action)
-        
         self.choose_notebook_action = QAction("Choose Notebook", self)
         self.account_menu.addAction(self.choose_notebook_action)
 
@@ -92,7 +85,6 @@ class MainWindow(QMainWindow):
         self.account_menu.addAction(self.sync_action)
         
     def SetupConnection(self):
-        self.authorize_action.triggered.connect(self.AuthorizeAccount)
         self.sync_action.triggered.connect(self.SyncWithAccount)
         self.choose_notebook_action.triggered.connect(self.ChooseNotebook)
         self.show_answer_button.clicked.connect(self.ShowAnswer)
@@ -138,20 +130,7 @@ class MainWindow(QMainWindow):
         self.client.UpdateNotebookList()
         self.client.UpdateLocalNotebooks()
         print("Evernote account is estabilished")
-        
-    def AuthorizeAccount(self):
-        
-        #get username
-        username = QInputDialog.getText(self, "Sign In", "Username: ")
-        password = QInputDialog.getText(self, "Sign In", "Password: ")
-        auth = Auth()        
-        oauth_token = auth.login(username, password)
-        #save
-        if(oauth_token != ""):
-            saved_file = open('../data/oauth_token', 'w')
-            pickle.dump(oauth_token, saved_file)
-            saved_file.close()
-        
+                
     def ChooseNotebook(self):
         try:
             notebook_info = self.client.ListNotebooksInfo()

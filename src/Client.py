@@ -1,7 +1,9 @@
+import thrift.protocol.TBinaryProtocol as TBinaryProtocol
+import thrift.transport.THttpClient as THttpClient
+import evernote.edam.userstore.UserStore as UserStore
 import evernote.edam.userstore.constants as UserStoreConstants
-import evernote.edam.type.ttypes as Types
-from evernote.api.client import EvernoteClient
 import evernote.edam.notestore.NoteStore as NoteStore
+import evernote.edam.type.ttypes as Types
 import random
 import pickle
 import os
@@ -16,17 +18,22 @@ class Client:
     def __init__(self):
         self.notebook_base_path = '../data/notebooks/'
         self.notebook_list_path = '../data/notebooks/notebook_list'
-        self.consumer_key = 'suyuxin-9809'
-        self.consumer_secret = 'f2541e0d8ea719ff'
-        self.callback_url = 'https://app.yinxiang.com/Oauth.action'
-        self.oauth_url = 'https://app.yinxiang.com/oauth'
-        self.authToken = 'S=s43:U=47f934:E=1445530c38e:C=13cfd7f978e:P=1cd:A=en-devtoken:H=1356ea06ef47bf5507cd51a0ad42eb06'
+        self.authToken = 'S=s8:U=157cd:E=1445787f1c0:C=13cffd6c5c0:P=1cd:A=en-devtoken:H=bb437bc824becdbe5c9145f6d27cb9f3'
+        self.evernoteHost = 'app.yinxiang.com'
+        self.userStoreUrl = 'https://' + self.evernoteHost + '/edam/user'
     
     def MakeConnectionWithEvernote(self):
-        client = EvernoteClient(token = self.authToken, sandbox = False )
-        self.note_store = client.get_note_store()
-        print("The connection with evernote.com is established")
-
+        if(not hasattr(self, 'note_store')):
+            userStoreHttpClient = THttpClient.THttpClient(self.userStoreUrl)
+            userStoreProtocol = TBinaryProtocol.TBinaryProtocol(userStoreHttpClient)
+            userStore = UserStore.Client(userStoreProtocol)
+            noteStoreUrl = userStore.getNoteStoreUrl(self.authToken)
+            noteStoreHttpClient = THttpClient.THttpClient(noteStoreUrl)
+            noteStoreProtocol = TBinaryProtocol.TBinaryProtocol(noteStoreHttpClient)
+            self.note_store = NoteStore.Client(noteStoreProtocol)
+            print("The connection with yinxiang.com is established")
+        else:
+            print("The connection with yinxiang.com has already been established")
     def ListNotebooksInfo(self):
         '''List all of the notebooks in the user's account'''
         self.notebooks, note_counts = self.LoadNotebookList()
@@ -43,7 +50,7 @@ class Client:
                 self.timestamp_list = pickle.load(infile)
                 infile.close()
                 count = 0
-                for note in notebook:
+                for note in self.note_list:
                     if(self.timestamp_list[note.guid][0] <= date.today()):
                         count = count + 1
                 info[notebook.name.decode('utf-8')] = [note_counts.notebookCounts[notebook.guid], count, 0]       
